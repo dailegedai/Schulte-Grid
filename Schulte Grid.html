@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>舒尔特方格训练器</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        .container {
+            margin: 20px;
+            text-align: center;
+        }
+
+        table {
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        td {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #ddd;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        td:hover {
+            background-color: #f8f8f8;
+        }
+
+        td.correct {
+            background-color: #90EE90 !important;
+        }
+
+        td.wrong {
+            background-color: #FFB6C1 !important;
+        }
+
+        #info {
+            margin: 20px;
+            font-size: 18px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>舒尔特方格训练</h1>
+        <div id="grid"></div>
+        <div id="info">
+            <p>当前目标数字: <span id="target">1</span></p>
+            <p>用时: <span id="timer">0</span> 秒</p>
+        </div>
+        <button onclick="initializeGame()">重新开始</button>
+        <button id="startBtn" onclick="startGame()">开始游戏</button>
+    </div>
+    <audio id="correctSound" src="correct.ogg" preload="auto"></audio>
+
+    <script>
+        let currentNumber = 1;
+        let startTime = null;
+        let timerInterval = null;
+        const gridSize = 5; // 修改这个数字改变方格尺寸
+
+        function createNumberArray() {
+            const numbers = Array.from({length: gridSize**2}, (_, i) => i + 1);
+            return numbers.sort(() => Math.random() - 0.5);
+        }
+
+        function createGrid() {
+            const numbers = createNumberArray();
+            const table = document.createElement('table');
+            
+            for(let i = 0; i < gridSize; i++) {
+                const tr = document.createElement('tr');
+                for(let j = 0; j < gridSize; j++) {
+                    const td = document.createElement('td');
+                    td.textContent = numbers[i*gridSize + j];
+                    td.addEventListener('click', handleClick);
+                    tr.appendChild(td);
+                }
+                table.appendChild(tr);
+            }
+            return table;
+        }
+
+        function handleClick(event) {
+            const clickedNumber = parseInt(event.target.textContent);
+            
+            if(clickedNumber === currentNumber) {
+                // 播放音效
+                const sound = document.getElementById('correctSound');
+                sound.currentTime = 0;  // 重置播放进度确保立即播放
+                sound.play();
+                
+                event.target.classList.add('correct');
+                currentNumber++;
+                document.getElementById('target').textContent = currentNumber;
+                
+                if(currentNumber > gridSize**2) {
+                    clearInterval(timerInterval);
+                    const timeTaken = (Date.now() - startTime) / 1000;
+                    alert(`恭喜完成！用时: ${timeTaken.toFixed(2)}秒`);
+                }
+            } else {
+                event.target.classList.add('wrong');
+                setTimeout(() => {
+                    event.target.classList.remove('wrong');
+                }, 500);
+            }
+        }
+
+        function startTimer() {
+            startTime = Date.now();
+            timerInterval = setInterval(() => {
+                document.getElementById('timer').textContent = 
+                    ((Date.now() - startTime)/1000).toFixed(2);
+            }, 100);
+        }
+
+        function initializeGame() {
+            currentNumber = 1;
+            clearInterval(timerInterval);
+            document.getElementById('target').textContent = '1';
+            document.getElementById('timer').textContent = '0';
+            
+            const gridContainer = document.getElementById('grid');
+            gridContainer.innerHTML = '';
+            gridContainer.appendChild(createGrid());
+            document.getElementById('startBtn').disabled = false; // 重新启用开始按钮
+        }
+        function startGame() {
+            startTimer();
+            document.getElementById('startBtn').disabled = true; // 禁用开始按钮
+        }
+
+        // 初始化游戏
+        initializeGame();
+    </script>
+</body>
+</html>
